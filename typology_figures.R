@@ -37,10 +37,11 @@ alluvial_graph<-
   scale_x_discrete(limits = c("Dimension: Objectives", "Dimension: Actors", "Dimension: Outputs", "Dimension: Innovativeness"), 
                    expand = c(.1, .05),
                    labels = function(x) stringr::str_wrap(x, width = 15))+
-  geom_alluvium(aes(fill = type5_top)) +
+  geom_flow(aes(fill = type5_top), width=1/4) +
   geom_stratum(fill="grey", 
-               width=1/3,
+               width=1/4,
   )+
+  #geom_lode()+
   geom_label_repel(
     stat = "stratum",
     aes(label = paste0(
@@ -49,7 +50,7 @@ alluvial_graph<-
       round(after_stat(prop), 3) *
         100, "%"
     )),
-    size = 3.5,
+    size = 3,
     #fill = alpha("white", 0.60),
     # lineheight = 0.75,
     #direction = "x",
@@ -63,7 +64,8 @@ alluvial_graph<-
        fill="Type of SI"
   )+
   scale_fill_brewer(palette = "Pastel1")+
-  theme(legend.key.size = unit(1.5, 'cm'))
+  theme(legend.position = "none")
+ # theme(legend.key.size = unit(1.5, 'cm'))
 #scale_fill_d3(palette="category20c")
 
 
@@ -108,9 +110,9 @@ alluvial_graph_sub <- Flat_data_filtered_2 %>%
     labels = function(x)
       stringr::str_wrap(x, width = 15)
   ) +
-  geom_alluvium(aes(fill = type5_top)) +
+  geom_flow(aes(fill = type5_top), width = 1 / 4) +
   geom_stratum(fill = "grey",
-               width = 1 / 3,) +
+               width = 1 / 4) +
   # geom_label(stat = "stratum", aes(label = paste0("Score ", stratum,
   #                                                 "\n",
   #                                                 round(after_stat(prop), 3)*100, "%")
@@ -127,7 +129,7 @@ alluvial_graph_sub <- Flat_data_filtered_2 %>%
       round(after_stat(prop), 3) *
         100, "%"
     )),
-    size = 3,
+    size = 2.5,
     #fill = alpha("white", 0.60),
     # lineheight = 0.75,
     #direction = "x",
@@ -158,20 +160,31 @@ bar_chart<-   pie_chart_df%>%
   ggplot(aes(x="", y=n, fill=type5_top)) + 
   geom_col(width=0.5)+
   geom_text(aes(label = paste0(type5_top, "\n", n, " (", round(Percentage, 1), "%)")), 
-            position = position_stack(vjust = 0.5)) +
+            position = position_stack(vjust = 0.5),
+            size=3) +
   scale_fill_brewer(palette = "Pastel1")+
   labs(x="",
        y="Number of Projects",
        fill="Type of SI"
   )+
   theme(legend.position = "none")+
-  coord_flip()
+  scale_x_discrete(expand = c(.15, .15))
+#+coord_flip()
 
 
-figure_2 <- ggarrange(alluvial_graph, alluvial_graph_sub, bar_chart, labels= c("a.", "b.", "c."), ncol=1, heights =  c(1, 1, 0.5), common.legend = F)
 
-ggsave("figure_2.png", figure_2, dpi=900, units="mm", width=200, height = 240)
 
+
+
+
+
+figure_2 <- ggarrange(
+  ggarrange(alluvial_graph, alluvial_graph_sub, ncol=1, heights=c(0.7, 1), labels= c("a.", "b.")), 
+  ggarrange(bar_chart, labels= c("c.")), 
+  ncol=2, 
+  widths =  c(1, 0.20))
+
+ggsave("figure_2.png", figure_2, dpi=900, units="mm", width=245, height = 139)
 
 ####Figure 3####
 
@@ -478,10 +491,7 @@ typology_mn_level_order <- c(
   #    "Total number of types of actors"
 )
 
-tt_typology_mn_07%>%
-  group_by(y.level)%>%
-  tally()%>%
-  print(n=100)
+
 
 
 figure_1 <- tt_typology_mn_07%>%
@@ -530,7 +540,15 @@ figure_1 <- tt_typology_mn_07%>%
 ggsave("figure_1.png", figure_1, dpi=900, units="mm", width=200, height = 240)
 
 
-
+tt_typology_mn_07%>%
+  mutate(y.level=factor(y.level, levels=c("Extensive SI",
+                                          "Limited SI",
+                                          "Oriented SI")),
+         term=str_replace_all(term, "`Yes", ""),
+         term=str_replace_all(term, "`", ""),
+  )%>%
+  mutate(term=factor(term, levels=typology_mn_level_order))%>%
+  write.csv("S1_model_table.csv")
 
 
 
